@@ -1,5 +1,6 @@
 import json
 import os.path as op
+from typing import Union
 from .common import qd_tqdm as tqdm
 from .common import json_dump
 from .common import pilimg_from_base64
@@ -31,8 +32,11 @@ class MinMaxResizeForTest(object):
         self.min_size = min_size
         self.max_size = max_size
 
-    def get_size(self, image_size):
-        w, h = image_size
+    def get_size(self, image: Union[Image.Image, torch.Tensor]):
+        if isinstance(image, torch.Tensor):
+            h, w = image.shape[2:]
+        else:
+            w, h = image.size
         size = self.min_size
         max_size = self.max_size
 
@@ -58,7 +62,7 @@ class MinMaxResizeForTest(object):
             self.min_size, self.max_size)
 
     def __call__(self, img):
-        size = self.get_size(img.size)
+        size = self.get_size(img)
         import torchvision.transforms.functional as F
         image = F.resize(img, size, interpolation=PIL.Image.BICUBIC)
         return image
@@ -108,7 +112,7 @@ def test_git_inference_single_image(image_path, model_name, prefix):
     cap = tokenizer.decode(result['predictions'][0].tolist(), skip_special_tokens=True)
     logging.info('output: {}'.format(cap))
 
-def get_image_transform(param):
+def get_image_transform(param, is_pt_tensor:bool=False):
     crop_size = param.get('test_crop_size', 224)
     if 'test_respect_ratio_max' in param:
         trans = [
@@ -117,12 +121,13 @@ def get_image_transform(param):
     else:
         trans = [
             Resize(crop_size, interpolation=Image.BICUBIC),
-            CenterCrop(crop_size),
-            lambda image: image.convert("RGB"),
-
+            CenterCrop(crop_size)
         ]
+        if not is_pt_tensor:
+            trans.append(lambda image: image.convert("RGB"))
+    if not is_pt_tensor:
+        trans.append(ToTensor())
     trans.extend([
-        ToTensor(),
         Normalize(
             (0.48145466, 0.4578275, 0.40821073),
             (0.26862954, 0.26130258, 0.27577711),
