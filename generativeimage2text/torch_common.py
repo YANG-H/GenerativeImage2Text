@@ -2,7 +2,7 @@ from pprint import pformat
 import logging
 import torch
 import io
-from azfuse import File
+# from azfuse import File
 
 
 def recursive_to_device(d, device, **kwargs):
@@ -39,7 +39,7 @@ def resize_2d_pos_embed(origin_pos_embed, origin_input, patch_size, after_input)
     return pos_embed
 
 def torch_load(filename):
-    with File.open(filename, 'rb') as fp:
+    with open(filename, 'rb') as fp:
         buf = io.BytesIO(fp.read())
     result = torch.load(buf, map_location=lambda storage, loc: storage)
     return result

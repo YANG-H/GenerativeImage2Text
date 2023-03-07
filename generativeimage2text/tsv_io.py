@@ -91,8 +91,8 @@ def tsv_reader(tsv_file_name, sep='\t'):
 
 def load_from_yaml_file(file_name):
     # do not use File.open as File.open depends on this function
-    with File.open(file_name, 'r') as fp:
-    #with open(file_name, 'r') as fp:
+    # with File.open(file_name, 'r') as fp:
+    with open(file_name, 'r') as fp:
         data = load_from_yaml_str(fp)
     while isinstance(data, dict) and '_base_' in data:
         b = op.join(op.dirname(file_name), data['_base_'])
